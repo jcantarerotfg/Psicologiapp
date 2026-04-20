@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+
+{% block title %}Crear Usuario{% endblock %}
+
+{% block content %}
+
+  <div id="mensajeModal" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white fw-bold">
+          <!--<h5 class="modal-title">Éxito</h5>-->
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body fs-7">
+          {% for message in messages %}
+            {{ message }}
+          {% endfor %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success fs-7" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mensajeErrorModal" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-primary bg-opacity-75 text-white fw-bold">
+          <p class="modal-title">Información</p>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body fs-7">
+          <p>Se han detectado los siguientes errores: </p>
+          <ul id="list-errores"></ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success fs-7" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <form method="POST" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    {% for field in form %}
+      {%if field.name != 'foto_perfil' and field.name != 'doctor' and field.name != 'rol' %}
+        <p>{{ field.label_tag }} {{ field }}</p>
+      {% endif %}
+    {% endfor %}
+
+    {{ form.rol.label_tag }} {{ form.rol }}
+    <div id="doctor-container" style="display: none;">
+        {{ form.doctor.label_tag }} {{ form.doctor }}
+    </div>
+
+    <p>
+      {{ form.foto_perfil.label_tag }}
+      <br/>
+      <img id="preview" src="/media/perfil/defecto/default-avatar.jpg" class="rounded-circle" style="object-fit:cover; border-radius:50%;" width="200" height="200"/>
+      {{ form.foto_perfil }}
+    </p>
+    <button type="submit">Guardar cambios</button>
+{% endblock content %}
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+    {% if messages %}
+    var modalEl = document.getElementById('mensajeModal');
+    if(modalEl){
+      var modal = new bootstrap.Modal(modalEl, {
+        ackdrop: 'static',
+        keyboard: false
+      });
+      modal.show();
+
+      modalEl.addEventListener('hidden.bs.modal', function(){
+        location.reload();
+      });
+    }
+    {% endif %}
+
+      var fotoActual = document.getElementById('id_foto_perfil');
+      var fotoNueva = document.getElementById("preview"); 
+
+      if (fotoActual && fotoNueva){
+        fotoActual.addEventListener('change', function(event){
+          var foto = event.target.files[0];
+          if (foto){
+            var reader = new FileReader();
+            reader.onload = function(e) {
+              preview.src = e.target.result;
+            }
+            reader.readAsDataURL(foto);
+          }
+        });
+      }
+
+      const errores = [
+        {% for field in form %}
+          {% for error in field.errors %}
+            "{{ error }}",
+          {% endfor %}
+        {% endfor %}
+      ]
+      console.log(errores);
+      if (errores.length > 0) {
+        const listado = document.getElementById("list-errores");
+        listado.innerHTML = "";
+
+        errores.forEach(error => {
+          const li = document.createElement("li");
+          li.textContent = error;
+          listado.appendChild(li);
+        });
+
+        const modalError = new bootstrap.Modal(document.getElementById("mensajeErrorModal"))
+        modalError.show();
+      }
+
+      /*document.getElementById('id_rol').addEventListener('change', function () {
+
+        const rol = this.value;
+        const doctorContainer = document.getElementById('doctor-container')
+
+        if (rol == 'paciente'){
+          doctorContainer.style.display = 'block'
+        } else {
+          doctorContainer.style.display = 'block'
+        }
+
+      });*/
+
+      const rol = document.getElementById('id_rol');
+      const doctorContainer = document.getElementById('doctor-container');
+
+      function mostrarDoctores() {
+        if (rol.value == 'paciente'){
+          doctorContainer.style.display = 'block'
+        } else {
+          doctorContainer.style.display = 'none'
+        }
+      }
+
+      mostrarDoctores();
+
+      rol.addEventListener('change', mostrarDoctores);
+
+    });
+  </script>
+{% endblock scripts %}
