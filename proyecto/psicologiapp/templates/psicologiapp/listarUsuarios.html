@@ -1,0 +1,252 @@
+{% extends "layout.html" %}
+
+{% block title %}Listado de Usuarios{% endblock %}
+
+{% block content %}
+    <div id="mensajeModal" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-success text-white fw-bold">
+              <!--<h5 class="modal-title">Éxito</h5>-->
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-7">
+              {% for message in messages %}
+                {{ message }}
+              {% endfor %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-success fs-7" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+  <div class="container-fluid px-3 mt-3">
+    <h2><i class="fa-solid fa-users"></i> Listado de Usuarios</h2>
+    <br>
+    <div class="card shadow-sm">
+        <div class="card-header bg-success bg-opacity-60 text-white fw-bold mb-3"
+            data-bs-toggle="collapse"
+            data-bs-target="#filtros"
+            style="cursor: pointer;">
+            <span><i class="fas fa-th-list"></i> Filtros </span>
+            <i class="fas fa-chevron-up" id="flechaFiltros" style="transition: transform 0.2s;"></i>
+        </div>
+        <div id="filtros" class="collapse">
+            <div class="card-body p-2">
+                <form method="GET">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <label class="form-label small">Usuario</label>
+                            <select name="usuario" class="form-select">
+                                <option value="">Todos los usuarios</option>
+                                {% for usuario in todos_usuarios %}
+                                <option value="{{ usuario.username }}" {% if busqueda == usuario.username %}selected{% endif %}>
+                                    {{ usuario.first_name }} {{ usuario.last_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mt-5">
+                            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <br>
+    <br>
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary bg-opacity-60 text-white fw-bold mb-3">
+            <i class="fas fa-th-list"></i> Usuarios Activos
+        </div>
+        <div class="card-body p-2">
+            <table class="table table-striped table-hover table-bordered table-responsive">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellidos</th>
+                        <th>Login</th>
+                        <th>Rol</th>
+                        <th>Telefono</th>
+                        <th>Email</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in obj_pagina %}
+                    <tr>
+                        <td>{{ usuario.first_name }}</td>
+                        <td>{{ usuario.last_name }}</td>
+                        <td>{{ usuario.username }}</td>
+                        <td>{{ usuario.get_rol_display }}</td>
+                        <td>{% if usuario.telefono %}{{ usuario.telefono }}{% endif %}</td>
+                        <td>{% if usuario.email %}{{ usuario.email }}{% endif %}</td>
+                        <td>
+                            <a href="{% url 'psicologiapp:editarUsuario' usuario.id %}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Editar usuario">
+                                <i class="fas fa-edit" style="color: white;"></i>
+                            </a>
+                            {% if request.user.rol == 'doctor' %}
+                            <a href="{% url 'psicologiapp:perfilPaciente' usuario.id %}" class="btn btn-sm btn-secondary" data-bs-toggle="tooltip" title="Perfil del paciente">
+                                <i class="fas fa-user-edit" style="color: white;"></i>
+                            </a>
+                            <a href="{% url 'psicologiapp:historialSesiones' usuario.id %}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Historial de sesiones">
+                                <i class="fas fa-clipboard-list" style="color: white;"></i>
+                            </a>
+                            <a href="{% url 'psicologiapp:listadoTareas' usuario.id %}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Listado de tareas">
+                                <i class="fas fa-tasks" style="color: white;"></i>
+                            </a>
+                            {% if usuario.chat %}
+                            <a href="{% url 'psicologiapp:conversacion' usuario.id %}" class="btn btn-sm btn-success" data-bs-toggle="tooltip" title="Mensajes paciente">
+                                <!--<i class="far fa-comments" style="color: white;"></i>-->
+                                <i class="fas fa-comment {% if usuario.id in sinLeer %}text-warning{% endif %}"></i>
+                            </a>
+                            {% endif %}
+                            {% endif %}
+                            <form method="POST" action="{% url 'psicologiapp:eliminarUsuario' usuario.id %}" style="display:inline;" data-bs-toggle="tooltip" title="Eliminar usuario">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que quieres eliminar este usuario?')"><i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No existen usuarios que mostrar</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>    
+            <div class="d-flex justify-content-center mt-3">
+                <nav>
+                    <ul class="pagination">
+
+                    <li class="page-item {% if not obj_pagina.has_previous %}disabled{% endif %}">
+                        <a class="page-link" href="{% if obj_pagina.has_previous %}?pagina={{ obj_pagina.previous_page_number }}{% else %}#{% endif %}">
+                        <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    {% for num in obj_pagina.paginator.page_range %}
+                        <li class="page-item {% if obj_pagina.number == num %}active{% endif %}">
+                        <a class="page-link" href="?pagina={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+
+                    <li class="page-item {% if not obj_pagina.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{% if obj_pagina.has_next %}?pagina={{ obj_pagina.next_page_number }}{% else %}#{% endif %}">
+                        <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card shadow-sm mt-3">
+        <div class="card-header bg-danger bg-opacity-60 text-white fw-bold mb-3">
+            <i class="fas fa-th-list"></i> Usuarios Eliminados
+        </div>
+        <div class="card-body p-2">
+            <table class="table table-striped table-hover table-bordered table-responsive">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellidos</th>
+                        <th>Login</th>
+                        <th>Rol</th>
+                        <th>Telefono</th>
+                        <th>Email</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in obj_pagina2 %}
+                    <tr>
+                        <td>{{ usuario.first_name }}</td>
+                        <td>{{ usuario.last_name }}</td>
+                        <td>{{ usuario.username }}</td>
+                        <td>{{ usuario.get_rol_display }}</td>
+                        <td>{% if usuario.telefono %}{{ usuario.telefono }}{% endif %}</td>
+                        <td>{% if usuario.email %}{{ usuario.email }}{% endif %}</td>
+                        <td>
+                            <form method="POST" action="{% url 'psicologiapp:restaurarUsuario' usuario.id %}" style="display:inline;" data-bs-toggle="tooltip" title="Restaurar usuario">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('¿Seguro que quieres restaurar este usuario?')"><i class="fas fa-check-square"></i>
+                                </button>
+                            </form>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No existen usuarios que mostrar</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-center mt-3">
+                <nav>
+                    <ul class="pagination">
+
+                    <li class="page-item {% if not obj_pagina2.has_previous %}disabled{% endif %}">
+                        <a class="page-link" href="{% if obj_pagina2.has_previous %}?pagina={{ obj_pagina2.previous_page_number }}{% else %}#{% endif %}">
+                        <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    {% for num in obj_pagina2.paginator.page_range %}
+                        <li class="page-item {% if obj_pagina2.number == num %}active{% endif %}">
+                        <a class="page-link" href="?pagina={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+
+                    <li class="page-item {% if not obj_pagina2.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{% if obj_pagina2.has_next %}?pagina={{ obj_pagina2.next_page_number }}{% else %}#{% endif %}">
+                        <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+  </div>
+{% endblock content %}
+{% block scripts %}
+<script>
+
+    
+    document.addEventListener("DOMContentLoaded", function() {
+         document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            new bootstrap.Tooltip(el);
+        });
+        document.getElementById('filtros').addEventListener('show.bs.collapse', () => {
+            document.getElementById('flechaFiltros').style.transform = 'rotate(180deg)';
+        });
+
+        document.getElementById('filtros').addEventListener('hide.bs.collapse', () => {
+            document.getElementById('flechaFiltros').style.transform = 'rotate(0deg)';
+        });
+    {% if messages %}
+    var modalEl = document.getElementById('mensajeModal');
+    if(modalEl){
+      var modal = new bootstrap.Modal(modalEl, {
+        backdrop: 'static',
+        keyboard: false
+      });
+      modal.show();
+
+      modalEl.addEventListener('hidden.bs.modal', function(){
+        location.reload();
+      });
+
+    }
+    {% endif %}
+    });
+  </script>
+{% endblock scripts %}

@@ -49,7 +49,11 @@
                                 <span class="input-group-text"><i class="bi bi-key"></i></i></span>
                                 {{ form.password|add_class:"form-control"|attr:"placeholder:Contraseña" }}
                             </div>
-                            {{ form.password.errors }}
+                            {% if form.nuevo_pass.errors %}
+                                {% for error in form.nuevo_pass.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
                         <!--<div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="remember">
@@ -86,6 +90,11 @@
                         <div class="d-flex justify-content-end">
                             <button type="submit" name="boton_pass" class="btn bg-danger bg-opacity-75 text-white fw-bold fs-7" data-bs-dismiss="modal">Cambiar contraseña</button>
                         </div>
+                        <div id="erroresPass" class="{% if not password_form.errors %}d-none{% endif %}">
+                        {% for error in password_form.nuevo_pass.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                        </div>
                     </form>
                 </div>
             </div>
@@ -93,6 +102,10 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+        {% if password_form.errors %}
+            var modalPass = new bootstrap.Modal(document.getElementById('tempModal'));
+            modalPass.show();
+        {% endif %}
         const modal = new bootstrap.Modal(document.getElementById("tempModal"));
         modal.show();
         });

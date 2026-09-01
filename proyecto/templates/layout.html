@@ -16,9 +16,8 @@
     <!--<script src="{% static 'js/main.js' %}" defer></script>-->
 </head>
 <body>
-
     <div class="d-flex">
-        <nav id="sidebar" class="d-flex flex-column p-3 flex-shrink-0">
+        <nav id="sidebar" class="flex-column p-3 flex-shrink-0 sidebar-{{ user.rol }}">
              <!--<button id="toggle-btn" class="btn btn-light btn-sm mb-0 align-self-end">
                 <i class="bi bi-list-ul"></i>
             </button>-->
@@ -26,7 +25,15 @@
                 <img src="{{ user.foto_perfil.url }}" alt="{{ user.first_name }}" class="rounded-circle flex-shrink-0 mb-3" style="object-fit:cover; border-radius:50%;" width="100" height="100">
                 <p class="mb-0 fw-bold text-light">{{ user.first_name }}</p>
                 <p class="mb-4 fw-bold text-light">{{ user.last_name }}</p>
-                <p class="mb-0 fw-bold">{{ user.get_rol_display }}</p>
+                <p class="mb-0 fw-bold text-light">{{ user.get_rol_display }}</p>
+                <form class="logout" action="{% url 'usuarios:logout' %}" method="POST">
+                        <hr class="border-light">
+                        <button type="submit" class="btn btn-light btn-outline-danger w-100 text-start fw-bold">
+                            {% csrf_token %} 
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            <span class="link-text fw-bold">Cerrar sesión</span>
+                        </button>
+                </form>
             </div>
             <hr class="border-light">
             <h5 class="text-white link-text mb-3 fs-4 fw-bold">Menú principal</h5>
@@ -39,32 +46,57 @@
                 {% if request.user.rol in 'admin,doctor' %}
                 <a href="{% url 'psicologiapp:crearUsuario' %}"
                     class="menu-item {% if request.resolver_match.url_name == 'crearUsuario' %}active{% endif %}">
-                    <i class="bi bi-person-circle"></i>
+                    <i class="fas fa-user-plus"></i>
                     Crear Usuario
+                </a>
+                {% endif %}
+                {% if request.user.rol in 'admin,doctor' %}
+                <a href="{% url 'psicologiapp:listarUsuarios' %}"
+                    class="menu-item {% if request.resolver_match.url_name == 'listarUsuarios' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    Listado Usuarios
+                </a>
+                {% endif %}
+
+                {% if request.user.rol in 'paciente' %}
+                <a href="{% url 'psicologiapp:calendario' %}"
+                    class="menu-item {% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
+                    <i class="fas fa-calendar-alt"></i>
+                    Registro diario
+                </a>
+                {% endif %}
+                {% if request.user.rol in 'doctor' %}
+                <a href="{% url 'psicologiapp:listarDiarios' %}"
+                    class="menu-item {% if request.resolver_match.url_name == 'listarDiarios' %}active{% endif %}">
+                    <i class="fas fa-pencil-alt"></i>
+                    Listado Entradas
+                </a>
+                {% endif %}
+                {% if request.user.rol in 'paciente' and request.user.chat%}
+                <a href="{% url 'psicologiapp:conversacionPaciente' %}"
+                    class="menu-item {% if request.resolver_match.url_name == 'conversacionPaciente' %}active{% endif %}">
+                    <i class="fas fa-comment {% if mensajesPendientes %}text-warning{% endif %}"></i>
+                    Mensajes
+                </a>
+                {% endif %}
+                {% if request.user.rol in 'paciente' %}
+                <a href="{% url 'psicologiapp:listadoTareasPaciente' %}"
+                    class="menu-item {% if request.resolver_match.url_name == 'listadoTareasPaciente' %}active{% endif %}">
+                    <i class="fas fa-pencil-alt"></i>
+                    Listado Tareas
                 </a>
                 {% endif %}
             </div>
             <ul class="nav flex-column gap-1">
                 {% block menu %}{% endblock %}
             </ul>
-            <div class="mt-auto">
-                <form class="logout" action="{% url 'usuarios:logout' %}" method="post">
-                        <hr class="border-light">
-                        <button type="submit" class="btn btn-light btn-outline-danger w-100 text-start fw-bold">
-                            {% csrf_token %} 
-                            <i class="fas fa-sign-out-alt me-2"></i>
-                            <span class="link-text fw-bold">Cerrar sesión</span>
-                        </button>
-                </form>
-            </div>
         </nav>
+            <div id="main-content" class="flex-grow-1 p-4">
+            {% block content %}
+            {% endblock %}
+            </div>
     </div>
     
-
-    <div id="main-content" class="flex-grow-1 p-4">
-        {% block content %}
-        {% endblock %}
-    </div>
     {% block scripts %}{% endblock %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

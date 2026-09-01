@@ -1,0 +1,35 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{% url 'psicologiapp:kanbanTareas' id_registro=tarea.relacion.id %}" class="btn btn-outline-secondary btn-sm">&#8592; Volver</a>
+    <h5 class="mb-0">Actualizar tarea</h5>
+  </div>
+
+  <div class="card border p-4">
+    <p class="mb-4"><strong>Tarea:</strong> {{ tarea.descripcion_tarea }}</p>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Estado</label>
+        <select name="estado_tarea" class="form-select">
+          <option value="sin_hacer" {% if tarea.estado_tarea == 'sin_hacer' %}selected{% endif %}>Sin hacer</option>
+          <option value="hecha" {% if tarea.estado_tarea == 'hecha' %}selected{% endif %}>Hecha</option>
+          <option value="no_hecha" {% if tarea.estado_tarea == 'no_hecha' %}selected{% endif %}>No hecha</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Comentario</label>
+        <textarea name="comentario_paciente" class="form-control" rows="3" 
+          placeholder="¿Qué te ha parecido la tarea?">{{ tarea.comentario_paciente }}</textarea>
+      </div>
+      <button type="submit" class="btn btn-outline-primary">Guardar</button>
+    </form>
+  </div>
+
+</div>
+
+{% endblock content %}

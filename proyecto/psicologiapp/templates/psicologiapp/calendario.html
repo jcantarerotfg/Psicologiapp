@@ -1,0 +1,109 @@
+{% extends "layout.html" %}
+
+{% block title %}Calendario{% endblock %}
+
+{% block content %}
+
+<div id="mensajeModal" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-success text-white fw-bold">
+              <!--<h5 class="modal-title">Éxito</h5>-->
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-7">
+              {% for message in messages %}
+                {{ message }}
+              {% endfor %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-success fs-7" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>  
+
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <h2><i class="fas fa-calendar-alt"></i> Calendario de Registros</h2>
+    <div class="col-md-8 col-lg-8">
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+      </div>
+
+      <div id="calendario"></div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+{% block scripts %}
+
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6/locales/es.global.min.js'></script>
+
+<!--El estilo del calendario debe ir aquí, ya que de poniendolo en el .css no lo carga-->
+<style>
+  .fc-daygrid-day:not(.fc-day-future) {
+      cursor: pointer;
+  }
+  .fc-daygrid-day:not(.fc-day-future):hover .fc-daygrid-day-frame {
+      background-color: rgba(136, 229, 235, 0.08);
+      border-radius: 8px;
+      transition: background-color 0.2s ease;
+  }
+  .fc-day-future {
+      opacity: 0.5;
+  }
+</style>
+
+{{ entradas|json_script:"entradas-data" }}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+       document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+      new bootstrap.Tooltip(el);
+    });
+    {% if messages %}
+    var modalEl = document.getElementById('mensajeModal');
+    if(modalEl){
+      var modal = new bootstrap.Modal(modalEl, {
+        ackdrop: 'static',
+        keyboard: false
+      });
+      modal.show();
+
+      modalEl.addEventListener('hidden.bs.modal', function(){
+        location.reload();
+      });
+    }
+    {% endif %}
+    });
+    const entradasCreadas = JSON.parse(document.getElementById('entradas-data').textContent);
+    const fechaHoy = new Date().toISOString().split('T')[0];
+    const carita = {1: '😢', 2: '😕', 3: '😐', 4: '😊', 5: '😄'};
+
+    const calendario = new FullCalendar.Calendar(document.getElementById('calendario'), {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        firstDay: 1,
+        dateClick: function(entradaDiario) {
+            
+            if (entradaDiario.dateStr <= fechaHoy) {
+                window.location.href = `/psicologiapp/diario/${entradaDiario.dateStr}/`;
+            }
+        },
+
+        events: entradasCreadas.map(e => ({
+            start: e.fecha_entrada,
+            title: carita[e.estado_animo] || '',
+            allDay: true,
+        })),
+        
+  });
+
+  calendario.render();
+</script>
+
+{% endblock scripts %}

@@ -9,6 +9,8 @@ from django.contrib import messages
 
 def login_view(request): 
     temporal = False
+    eliminado = False
+    form = AuthenticationForm()
     password_form = forms.CambiarPasswordForm()
     if request.method == "POST": 
         if "boton_login" in request.POST:
@@ -17,11 +19,16 @@ def login_view(request):
                 usuario = form.get_user()
                 login(request, form.get_user())
                 temporal = usuario.pass_temporal
-                if temporal:
-                    return render(request, "usuarios/login.html", { "form": form, "temporal": temporal, "password_form": password_form })
+                eliminado = usuario.eliminado
+                print("Eliminado: ", eliminado)
+                if not eliminado:
+                    if temporal:
+                        return render(request, "usuarios/login.html", { "form": form, "temporal": temporal, "password_form": password_form })
+                    else:
+                        next = request.POST.get('next')
+                        return redirect(next if next else "psicologiapp:perfil")
                 else:
-                    next = request.POST.get('next')
-                    return redirect(next if next else "psicologiapp:perfil")
+                    return redirect("usuarios:login")
         elif "boton_pass" in request.POST:
             password_form = forms.CambiarPasswordForm(request.POST)
             if password_form.is_valid():
@@ -33,6 +40,8 @@ def login_view(request):
                 messages.success(request, 'Contraseña actualizada correctamente')
                 next = request.POST.get('next')
                 return redirect(next if next else "psicologiapp:perfil")
+            else:
+                return render(request, "usuarios/login.html", {'form': form, 'temporal': True, 'password_form': password_form})
     
     else: 
         form = AuthenticationForm()

@@ -1,0 +1,115 @@
+{% extends 'layout.html' %}
+{% block title %}Listado de tareas del paciente{% endblock %}
+{% block content %}
+
+<div id="mensajeModal" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-success text-white fw-bold">
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body fs-7">
+              {% for message in messages %}
+                {{ message }}
+              {% endfor %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-success fs-7" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+    </div>
+<div class="container-fluid px-3 mt-3">
+    <h2><i class="fas fa-clipboard-list"></i> Tareas del paciente</h2>
+    <br>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{% url 'psicologiapp:perfil' %}" class="btn btn-primary btn-sm">&#8592; Volver</a>
+    </div>
+
+  <div class="card shadow-sm">
+        <div class="card-header bg-primary bg-opacity-60 text-white fw-bold mb-3">
+            <i class="fas fa-th-list"></i> Tareas
+        </div>
+        <div class="card-body p-2">
+            <table class="table table-striped table-hover table-bordered table-responsive">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Comentario</th>
+                        <th>Nº tareas</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for registro in obj_pagina %}
+                  <tr class="{% if registro.completado %}table-success{% endif %}">
+                    <td>{{ registro.fecha_tareas|date:"j \d\e F \d\e Y" }}</td>
+                    <td>{{ registro.observacion_doctor|truncatewords:10 }}</td>
+                    <td>{{ registro.tareas_set.count }}</td>
+                    <td>
+                      <a href="{% url 'psicologiapp:kanbanTareas' id_registro=registro.id %}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Ver tareas">
+                        <i class="fas fa-book" style="color: white;"></i>
+                      </a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-muted text-center">No hay registros de tareas.</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>    
+              <div class="d-flex justify-content-center mt-3">
+                  <nav>
+                      <ul class="pagination">
+
+                          <li class="page-item {% if not obj_pagina.has_previous %}disabled{% endif %}">
+                              <a class="page-link" href="{% if obj_pagina.has_previous %}?pagina={{ obj_pagina.previous_page_number }}&usuario={{ id_usuario_sel }}&leido={{ leido_sel }}{% else %}#{% endif %}">
+                                  <i class="fas fa-chevron-left"></i>
+                              </a>
+                          </li>
+
+                          {% for num in obj_pagina.paginator.page_range %}
+                          <li class="page-item {% if obj_pagina.number == num %}active{% endif %}">
+                              <a class="page-link" href="?pagina={{ num }}&usuario={{ id_usuario_sel }}&leido={{ leido_sel }}">{{ num }}</a>
+                          </li>
+                          {% endfor %}
+
+                          <li class="page-item {% if not obj_pagina.has_next %}disabled{% endif %}">
+                              <a class="page-link" href="{% if obj_pagina.has_next %}?pagina={{ obj_pagina.next_page_number }}&usuario={{ id_usuario_sel }}&leido={{ leido_sel }}{% else %}#{% endif %}">
+                                  <i class="fas fa-chevron-right"></i>
+                              </a>
+                          </li>
+
+                      </ul>
+                  </nav>
+              </div>
+            </div>
+  </div>
+
+</div>
+{% endblock content %}
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            new bootstrap.Tooltip(el);
+        });
+    {% if messages %}
+    var modalEl = document.getElementById('mensajeModal');
+    if(modalEl){
+      var modal = new bootstrap.Modal(modalEl, {
+        ackdrop: 'static',
+        keyboard: false
+      });
+      modal.show();
+
+      modalEl.addEventListener('hidden.bs.modal', function(){
+        location.reload();
+      });
+
+    }
+    {% endif %}
+    });
+  </script>
+{% endblock scripts %}
